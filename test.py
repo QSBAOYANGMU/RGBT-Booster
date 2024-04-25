@@ -8,7 +8,7 @@ from datasets.crowd import Crowd
 #from model.counter import fusion_model
 #from Network.DCMFNet import fusion_model
 #from models.HDFNet import fusion_model
-from models.DEFNet import fusion_model
+from models.RGB-Booster import fusion_model
 from utils.evaluation import eval_game, eval_relative
 from PIL import Image
 
@@ -16,9 +16,9 @@ from PIL import Image
 parser = argparse.ArgumentParser(description='Test')
 parser.add_argument('--data-dir', default='F:\CrowdCounting(rgbt)\RGBTCC-main\RGBT-CC',
                         help='training data directory')
-parser.add_argument('--save-dir', default=r'F:\CrowdCounting(rgbt)\DEFNet-main - 副本 - 副本\DEFNet for RGBT Crowd Counting - 副本\save\0118-235502_10.75',
+parser.add_argument('--save-dir', default=r'',
                         help='model directory')
-parser.add_argument('--model', default='best_model_29.pth'
+parser.add_argument('--model', default=''
                     , help='model name')
 
 parser.add_argument('--device', default='0', help='gpu device')
@@ -27,7 +27,7 @@ args = parser.parse_args()
 if __name__ == '__main__':
 
 
-    datasets = Crowd(os.path.join(args.data_dir, 'test_brightness'), method='test')
+    datasets = Crowd(os.path.join(args.data_dir, 'test'), method='test')
     dataloader = torch.utils.data.DataLoader(datasets, 1, shuffle=False,
                                              num_workers=8, pin_memory=True)
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         else:
             assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
         with torch.set_grad_enabled(False):
-            outputs, in_data_8, in_data_8_dd, in_data_4, in_data_4_dd, in_data_2, in_data_2_dd, in_data_1, in_data_1_dd= model(inputs)
+            outputs= model(inputs)
             # outputs,_,_,_ = outputs
             for L in range(4):
                 abs_error, square_error = eval_game(outputs, target, L)
@@ -71,12 +71,11 @@ if __name__ == '__main__':
 
     # print(type(type(outputs)))
 
-            path = os.path.join(r'C:\Users\NBU\Desktop\人群计数3\我的实验结果\10.91',name[0]+'.png')
+            path = os.path.join(r'',name[0]+'.png')
             img =outputs.data.cpu().numpy()
             img = img.squeeze(0).squeeze(0)
             print(name[0],img.sum())
             img = img * 255.
-            img = Image.fromarray(img).convert('L')
             # img = Image.fromarray(img)
             # img = img.astype(np.uint8)
             img.save(path)
