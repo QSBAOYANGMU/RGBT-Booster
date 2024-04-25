@@ -46,9 +46,9 @@ def parse_args():
                         help='sigma for likelihood')
     parser.add_argument('--background-ratio', type=float, default=0.15,
                         help='background ratio')
-    parser.add_argument('--a', type=float, default=0.0001,
+    parser.add_argument('--a', type=float, default=1,
                         help='weight_1')
-    parser.add_argument('--b', type=float, default=0.0001,
+    parser.add_argument('--b', type=float, default=1,
                         help='weight_2')
     # parser.add_argument('--c', type=float, default=0.0001,
     #                     help='weight_3')
