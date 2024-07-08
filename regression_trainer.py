@@ -25,7 +25,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from datasets.crowd import Crowd
 from losses.bay_loss import Bay_Loss
 from losses.post_prob import Post_Prob
-from models.DEFNet import (fusion_model,Teacher_model)
+from models.RGBT-Booster import fusion_model
 def train_collate(batch):
     transposed_batch = list(zip(*batch))
     if type(transposed_batch[0][0]) == list:
@@ -77,22 +77,9 @@ class RegTrainer(Trainer):
                                           pin_memory=(True if x == 'train' else False))
                             for x in ['train', 'val', 'test']}
 
-        self.model_S = fusion_model()
+        self.model = fusion_model()
         # self.model_T = Teacher_model()
-        self.model_S.to(self.device)
-        # self.model_T.to(self.device)
-        # self.Patch_Embed_private = PatchEmbed(img_size=16, patch_size=1, in_c=32, embed_dim=32)
-        # self.Patch_Embed_shared = PatchEmbed(img_size=16, patch_size=1, in_c=32, embed_dim=32)
-        # self.Patch_Embed_recon = PatchEmbed(img_size=16, patch_size=1, in_c=512, embed_dim=512)
-        # self.Patch_Embed_orig = PatchEmbed(img_size=16, patch_size=1, in_c=512, embed_dim=512)
-        # self.Patch_Embed_private = PatchEmbed(patch_size=1, in_channels=32, embed_dim=32)
-        # self.Patch_Embed_shared = PatchEmbed(patch_size=1, in_channels=32, embed_dim=32)
-        # self.Patch_Embed_recon = PatchEmbed(patch_size=1, in_channels=512, embed_dim=512)
-        # self.Patch_Embed_orig = PatchEmbed(patch_size=1, in_channels=512, embed_dim=512)
-        # self.Patch_Embed_private.to(self.device)
-        # self.Patch_Embed_shared.to(self.device)
-        # self.Patch_Embed_recon.to(self.device)
-        # self.Patch_Embed_orig.to(self.device)
+        self.model.to(self.device)
         self.optimizer = optim.Adam(self.model_S.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         self.scheduler = StepLR(self.optimizer, step_size=300, gamma=0.5)
 
@@ -124,9 +111,6 @@ class RegTrainer(Trainer):
         self.closs4 = self.closs4.to(self.device)
         self.closs8 = self.closs8.to(self.device)
         # self.diffloss = pytorch_ssim.SSIM(window_size = 11)
-        # self.diffloss = torch.nn.CosineSimilarity(dim=2, eps=1e-6)
-        # self.diffloss=torch.nn.CosineEmbeddingLoss(margin=0.5, size_average=None, reduce=None, reduction='mean')
-        # self.cmd = torch.nn.MSELoss(size_average=None, reduce=None, reduction='mean')
         # if torch.cuda.is_available() and args.use_cuda:
         self.mse = self.mse.to(self.device)
         # self.diffloss = self.diffloss.to(self.device)
@@ -139,17 +123,6 @@ class RegTrainer(Trainer):
         self.best_count = 0
         self.best_count_1 = 0
         self.temp=2
-        # if self.lr_scheduler_name == "StepLR":
-        #     self.scheduler = lr_scheduler.StepLR(self.optimizer,
-        #                                          last_epoch=-1,
-        #                                          step_size=args.decay_interval,
-        #                                          gamma=args.decay_ratio)
-        # elif self.lr_scheduler_name == "CosineAnnealingLR":
-        #     self.scheduler = lr_scheduler.CosineAnnealingLR(self.optimizer,
-        #                                                     T_max=self.max_epochs * self.num_steps_per_epoch,
-        #                                                     last_epoch=-1)
-        # else:
-        #     raise Exception("Wrong lr_scheduler_name")
 
     def train(self):
         """training process"""
@@ -196,12 +169,10 @@ class RegTrainer(Trainer):
             points = [p.to(self.device) for p in points]
 
             with torch.set_grad_enabled(True):
-                outputs, in_data_8,in_data_8_dd, in_data_4,in_data_4_dd,  in_data_2,in_data_2_dd, in_data_1, in_data_1_dd= self.model_S(inputs)
-                # layer_r, teacher_r , layer_t, teacher_t = self.model_T(inputs)
+                outputs, in_data_8,in_data_8_dd, in_data_4,in_data_4_dd,  in_data_2,in_data_2_dd, in_data_1, in_data_1_dd= self.model(inputs)
                 prob_list = self.post_prob(points, st_sizes)
                 loss_bays = self.criterion(prob_list, outputs)
                 CLoss=self.closs1(in_data_1,in_data_1_dd)+self.closs2(in_data_2,in_data_2_dd)+self.closs4(in_data_4,in_data_4_dd)+self.closs8(in_data_8,in_data_8_dd)
-                # loss_mse=self.mse(outputs,inputs[2])
                 ###################
                 #############################
                 loss=loss_bays+args.a* CLoss
@@ -261,7 +232,7 @@ class RegTrainer(Trainer):
             else:
                 assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
             with torch.set_grad_enabled(False):
-                outputs, in_data_8,in_data_8_dd, in_data_4,in_data_4_dd,  in_data_2,in_data_2_dd, in_data_1, in_data_1_dd= self.model_S(inputs)
+                outputs, in_data_8,in_data_8_dd, in_data_4,in_data_4_dd,  in_data_2,in_data_2_dd, in_data_1, in_data_1_dd= self.model(inputs)
                 #outputs,_,_,_ = outputs
                 for L in range(4):
                     abs_error, square_error = eval_game(outputs, target, L)
@@ -282,7 +253,7 @@ class RegTrainer(Trainer):
                              )
                      )
 
-        model_state_dic = self.model_S.state_dict()
+        model_state_dic = self.model.state_dict()
 
         game0_is_best = game[0] < self.best_game0
         game3_is_best = game[3] < self.best_game3
@@ -303,7 +274,7 @@ class RegTrainer(Trainer):
         return game0_is_best, game3_is_best
 
     def test_epoch(self):
-        self.model_S.eval()  # Set model to evaluate mode
+        self.model.eval()  # Set model to evaluate mode
 
         # Iterate over data.
         game = [0, 0, 0, 0]
@@ -325,7 +296,7 @@ class RegTrainer(Trainer):
             else:
                 assert inputs.size(0) == 1, 'the batch size should equal to 1 in validation mode'
             with torch.set_grad_enabled(False):
-                outputs, in_data_8,in_data_8_dd, in_data_4,in_data_4_dd,  in_data_2,in_data_2_dd, in_data_1, in_data_1_dd= self.model_S(inputs)
+                outputs, in_data_8,in_data_8_dd, in_data_4,in_data_4_dd,  in_data_2,in_data_2_dd, in_data_1, in_data_1_dd= self.model(inputs)
                 # outputs,_,_,_, = outputs
                 for L in range(4):
                     abs_error, square_error = eval_game(outputs, target, L)
