@@ -7,7 +7,7 @@ from backbone.VGG import (
     Backbone_VGG_in1,
     Backbone_VGG_in3,
 )
-from module.pretrainteaher import (teacher_T, teacher_R)
+# from module.pretrainteaher import (teacher_T, teacher_R)
 from module.MyModules import (
     EDFM,
     EDFMT,
@@ -55,7 +55,7 @@ class BasicConv2d(nn.Module):
 
 class RGBT-Booster(nn.Module):
     def __init__(self, pretrained=True):
-        superRGBT-Boosterself).__init__()
+        super(RGBT-Booster,self).__init__()
         self.upsample_add = upsample_add
         self.upsample = cus_sample
         self.vgg_r = convnext_tiny(pretrained=True, in_22k=True)
@@ -252,11 +252,11 @@ class RGBT-Booster(nn.Module):
 
 
 def fusion_model():
-    model = DEFNet()
+    model = RGBT-Booster()
     return model
 
 if __name__ == "__main__":
-    model = DEFNet()
+    model = RGBT-Booster()
     x = torch.randn(2,3,256,256)
     depth = torch.randn(2,3,256,256)
     fuse = model([x,depth])
