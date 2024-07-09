@@ -8,12 +8,3 @@ The ShanghaiTechRGBD.txt contains the people estimation results of our model on 
 
 The rest of the code will be released after the article is accepted
 
-The estimated density maps can be found here
-
-链接：https://pan.baidu.com/s/1GIpxrSIJ0vbc3mIbCytaWQ?pwd=64o5 
-提取码：64o5
-
-Trained weights click here
-
-链接：https://pan.baidu.com/s/159awjWLIQO_kEB-bjscuKg?pwd=343b 
-提取码：343b
